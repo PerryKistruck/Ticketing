@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - Ticketing System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <nav>
+            <h1>Ticketing System</h1>
+            <ul>
+                <li><a href="{{ url_for('home') }}">Home</a></li>
+                <li><a href="{{ url_for('about') }}">About</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="about">
+            <h2>About Our Ticketing System</h2>
+            <p>Our ticketing system is designed to streamline support processes and improve customer satisfaction.</p>
+            
+            <h3>Features</h3>
+            <ul>
+                <li>Easy ticket creation and management</li>
+                <li>Real-time status updates</li>
+                <li>Priority-based ticket handling</li>
+                <li>Comprehensive reporting</li>
+            </ul>
+
+            <h3>Contact Us</h3>
+            <p>If you need assistance, please don't hesitate to reach out to our support team.</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Ticketing System. All rights reserved.</p>
+    </footer>
+</body>
+</html>
