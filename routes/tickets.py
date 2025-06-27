@@ -1,22 +1,35 @@
 from flask import Blueprint, request, jsonify
 from models import db, Ticket, User
 from auth.auth_utils import login_required, get_current_user, admin_required
+import logging
 
 tickets_bp = Blueprint('tickets', __name__)
+logger = logging.getLogger(__name__)
 
 @tickets_bp.route('/', methods=['GET'])
 @login_required
 def get_tickets():
-    current_user = get_current_user()
-    
-    # This endpoint always shows only personal tickets (created by user OR assigned to user)
-    # Even for admins when they're using the regular dashboard
-    tickets = Ticket.query.filter(
-        (Ticket.user_id == current_user.id) | 
-        (Ticket.assigned_to == current_user.id)
-    ).all()
-    
-    return jsonify([ticket.to_dict() for ticket in tickets])
+    try:
+        current_user = get_current_user()
+        logger.info(f"Fetching tickets for user: {current_user.id if current_user else 'None'}")
+        
+        if not current_user:
+            logger.error("No current user found in get_tickets")
+            return jsonify({"error": "User not authenticated"}), 401
+        
+        # This endpoint always shows only personal tickets (created by user OR assigned to user)
+        # Even for admins when they're using the regular dashboard
+        tickets = Ticket.query.filter(
+            (Ticket.user_id == current_user.id) | 
+            (Ticket.assigned_to == current_user.id)
+        ).all()
+        
+        logger.info(f"Found {len(tickets)} tickets for user {current_user.id}")
+        
+        return jsonify([ticket.to_dict() for ticket in tickets])
+    except Exception as e:
+        logger.error(f"Error in get_tickets: {str(e)}")
+        return jsonify({"error": "Failed to fetch tickets", "details": str(e)}), 500
 
 @tickets_bp.route('/admin/all', methods=['GET'])
 @admin_required
