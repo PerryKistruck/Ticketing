@@ -28,15 +28,49 @@ A Flask-based web application for support ticket management with role-based acce
 
 ## Usage
 
-### Users
-- Register/login to access personal dashboard
-- Create and manage personal tickets
-- Edit ticket details and status
+### Getting Started
+1. **Access the website**: Navigate to `http://localhost:5000` in your web browser after starting the application
+2. **Create an account**: Click "Register" and fill in your details (username, email, password, full name)
+3. **Login**: Use your credentials to access your personal dashboard
 
-### Administrators  
-- Access admin dashboard for system-wide ticket management
-- Assign tickets and manage user roles
-- Perform administrative operations on all tickets
+### For Regular Users
+
+#### Creating a Support Ticket
+1. **Login** to your account
+2. **Click "Create New Ticket"** button on your dashboard
+3. **Fill in the form**:
+   - Enter a clear, descriptive title
+   - Provide detailed description of your issue
+   - Select priority level (Low, Medium, High, Critical)
+4. **Submit** your ticket - you'll receive a confirmation
+
+#### Managing Your Tickets
+- **View tickets**: See all your tickets on the dashboard with status indicators
+- **Edit tickets**: Click on any ticket to update details or add comments
+- **Track progress**: Monitor status changes (Open → In Progress → Resolved → Closed)
+- **Update information**: Modify ticket details as needed
+
+### For Administrators
+
+#### Admin Dashboard Access
+1. **Login** with administrator credentials
+2. **Navigate** to the admin dashboard (additional menu options will appear)
+3. **View system overview**: See all tickets across all users
+
+#### Managing All Tickets
+- **Assign tickets**: Assign tickets to specific team members
+- **Update status**: Change ticket status and priority
+- **Bulk operations**: Manage multiple tickets simultaneously
+- **User management**: View and manage user accounts and permissions
+
+### Quick Tips
+- **Ticket Status Guide**:
+  - 🔴 **Open**: New ticket awaiting attention
+  - 🟡 **In Progress**: Currently being worked on
+  - 🟢 **Resolved**: Issue fixed, awaiting user confirmation
+  - ⚫ **Closed**: Ticket completed and closed
+- **Priority Levels**: Use appropriate priority (Critical for urgent issues, Low for minor requests)
+- **Clear descriptions**: Provide as much detail as possible for faster resolution
 
 ## Architecture
 
