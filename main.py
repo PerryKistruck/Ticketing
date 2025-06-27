@@ -22,11 +22,22 @@ register_routes(app)
 # Create tables with error handling
 with app.app_context():
     try:
+        # Test database connection first
+        logger.info(f"Testing database connection...")
+        logger.info(f"Database URI: {app.config.get('SQLALCHEMY_DATABASE_URI', 'Not set')}")
+        
+        # Simple connection test
+        from sqlalchemy import text
+        result = db.session.execute(text('SELECT 1'))
+        logger.info("Database connection successful")
+        
+        # Create tables
         db.create_all()
         logger.info("Database tables created successfully")
     except Exception as e:
-        logger.error(f"Database connection failed: {str(e)}")
-        logger.error(f"Database URI: {app.config.get('SQLALCHEMY_DATABASE_URI', 'Not set')}")
+        logger.error(f"Database setup failed: {str(e)}")
+        # Don't fail the app startup - let it run without DB for debugging
+        logger.error("App will continue without database connection")
 
 @app.context_processor
 def inject_user():
