@@ -1,46 +1,61 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ticketing System - Home</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <header>
-        <nav>
-            <h1>Ticketing System</h1>
-            <ul>
-                <li><a href="{{ url_for('home') }}">Home</a></li>
-                <li><a href="{{ url_for('about') }}">About</a></li>
-            </ul>
-        </nav>
-    </header>
+Ticketing\templates\index.html -->
+{% extends "base.html" %}
 
-    <main>
-        <section class="hero">
-            <h2>Welcome to Our Ticketing System</h2>
-            <p>Manage your tickets efficiently and effectively.</p>
-        </section>
+{% block title %}Home - Ticketing System{% endblock %}
 
-        <section class="features">
-            <div class="feature">
-                <h3>Create Tickets</h3>
-                <p>Easily create and submit new support tickets.</p>
-            </div>
-            <div class="feature">
-                <h3>Track Progress</h3>
-                <p>Monitor the status of your tickets in real-time.</p>
-            </div>
-            <div class="feature">
-                <h3>Get Support</h3>
-                <p>Connect with our support team quickly.</p>
-            </div>
-        </section>
-    </main>
+{% block content %}
+<div class="hero-section bg-primary text-white py-5 rounded mb-5">
+    <div class="container text-center">
+        <h1 class="display-4 mb-4">
+            <i class="fas fa-ticket-alt me-3"></i>TicketPro
+        </h1>
+        <p class="lead mb-4">Your comprehensive ticket management solution</p>
+        {% if not current_user %}
+        <div class="d-flex justify-content-center gap-3">
+            <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg">
+                <i class="fas fa-user-plus me-2"></i>Get Started
+            </a>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light btn-lg">
+                <i class="fas fa-sign-in-alt me-2"></i>Login
+            </a>
+        </div>
+        {% else %}
+        <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-lg">
+            <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+        </a>
+        {% endif %}
+    </div>
+</div>
 
-    <footer>
-        <p>&copy; 2025 Ticketing System. All rights reserved.</p>
-    </footer>
-</body>
-</html>
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-plus-circle fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">Create Tickets</h5>
+                <p class="card-text">Easily create and submit support tickets for any issues or requests.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-tasks fa-3x text-success mb-3"></i>
+                <h5 class="card-title">Track Progress</h5>
+                <p class="card-text">Monitor the status and progress of all your tickets in real-time.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-line fa-3x text-info mb-3"></i>
+                <h5 class="card-title">Analytics</h5>
+                <p class="card-text">View detailed analytics and reports on your ticket history.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
