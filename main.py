@@ -3,9 +3,15 @@ from config import Config
 from models import db
 from routes import register_routes
 from auth.auth_utils import get_current_user, admin_required
+import logging
+import sys
 
 app = Flask(__name__)
 app.config.from_object(Config)
+
+# Configure logging for Azure
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Initialize database
 db.init_app(app)
@@ -13,13 +19,28 @@ db.init_app(app)
 # Register API routes
 register_routes(app)
 
-# Create tables
+# Create tables with error handling
 with app.app_context():
-    db.create_all()
+    try:
+        db.create_all()
+        logger.info("Database tables created successfully")
+    except Exception as e:
+        logger.error(f"Database connection failed: {str(e)}")
+        logger.error(f"Database URI: {app.config.get('SQLALCHEMY_DATABASE_URI', 'Not set')}")
 
 @app.context_processor
 def inject_user():
     return dict(current_user=get_current_user())
+
+@app.route('/health')
+def health_check():
+    try:
+        # Test database connection
+        db.session.execute('SELECT 1')
+        return {"status": "healthy", "database": "connected"}, 200
+    except Exception as e:
+        logger.error(f"Health check failed: {str(e)}")
+        return {"status": "unhealthy", "error": str(e)}, 500
 
 @app.route('/')
 def home():
