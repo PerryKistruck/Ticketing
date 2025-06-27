@@ -1,3 +1,4 @@
+# This file makes the routes directory a Python package
 from .tickets import tickets_bp
 from .users import users_bp
 from auth import auth_bp
