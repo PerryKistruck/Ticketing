@@ -2,30 +2,51 @@
 
 let allTickets = [];
 let filteredTickets = [];
+let currentUser = null;
 
 document.addEventListener('DOMContentLoaded', function() {
+    loadUserInfo();
     loadTickets();
     setupEventListeners();
+    
+    // Initialize create ticket modal with dashboard-specific options
+    initCreateTicketModal({
+        redirectAfterCreate: false,
+        onTicketCreated: (newTicket) => {
+            // Add the new ticket to the dashboard
+            allTickets.unshift(newTicket);
+            applyFilters();
+            updateStats();
+        }
+    });
 });
 
+function loadUserInfo() {
+    // Get user info from the template context
+    const userElement = document.querySelector('[data-user-info]');
+    if (userElement) {
+        currentUser = JSON.parse(userElement.dataset.userInfo);
+    }
+}
+
 function setupEventListeners() {
-    // Create ticket form
-    document.getElementById('createTicketForm').addEventListener('submit', handleCreateTicket);
-    
-    // Edit ticket form
-    document.getElementById('editTicketForm').addEventListener('submit', handleEditTicket);
-    
     // Filters
-    document.getElementById('statusFilter').addEventListener('change', applyFilters);
-    document.getElementById('priorityFilter').addEventListener('change', applyFilters);
+    const statusFilter = document.getElementById('statusFilter');
+    const priorityFilter = document.getElementById('priorityFilter');
+    
+    if (statusFilter) statusFilter.addEventListener('change', applyFilters);
+    if (priorityFilter) priorityFilter.addEventListener('change', applyFilters);
 }
 
 async function loadTickets() {
     try {
         showLoading(true);
         const tickets = await apiRequest('/api/tickets');
+        
+        // Regular dashboard always shows personal tickets only
+        // No admin filtering needed here - backend handles it
         allTickets = tickets;
-        filteredTickets = tickets;
+        filteredTickets = allTickets;
         updateDashboard();
         showLoading(false);
     } catch (error) {
@@ -40,6 +61,7 @@ function updateDashboard() {
 }
 
 function updateStats() {
+    // Use allTickets (which are already filtered for non-admin users)
     const total = allTickets.length;
     const open = allTickets.filter(t => t.status === 'open').length;
     const inProgress = allTickets.filter(t => t.status === 'in_progress').length;
@@ -65,12 +87,20 @@ function updateTicketsTable() {
     ticketsTable.style.display = 'block';
     noTickets.style.display = 'none';
 
-    tbody.innerHTML = filteredTickets.map(ticket => `
+    tbody.innerHTML = filteredTickets.map(ticket => {
+        
+        return `
         <tr class="fade-in">
-            <td>#${ticket.id}</td>
             <td>
-                <strong>${ticket.title}</strong>
-                ${ticket.description ? `<br><small class="text-muted">${ticket.description.substring(0, 50)}${ticket.description.length > 50 ? '...' : ''}</small>` : ''}
+                #${ticket.id}
+                ${currentUser && ticket.user_id === currentUser.id ? 
+                    '<br><small class="badge bg-success">Created by me</small>' : ''}
+                ${currentUser && ticket.assigned_to === currentUser.id ? 
+                    '<br><small class="badge bg-info">Assigned to me</small>' : ''}
+            </td>
+            <td>
+                <strong>${escapeHtml(ticket.title)}</strong>
+                ${ticket.description ? `<br><small class="text-muted">${escapeHtml(ticket.description.substring(0, 50))}${ticket.description.length > 50 ? '...' : ''}</small>` : ''}
             </td>
             <td>
                 <span class="badge badge-status status-${ticket.status}">
@@ -78,23 +108,20 @@ function updateTicketsTable() {
                 </span>
             </td>
             <td>
-                <span class="badge priority-${ticket.priority}">
-                    ${capitalize(ticket.priority)}
+                <span class="badge priority-${ticket.priority} ${(ticket.priority === 'high' || ticket.priority === 'urgent') ? 'priority-urgent' : ''}">
+                    ${(ticket.priority === 'high' || ticket.priority === 'urgent') ? 'URGENT' : capitalize(ticket.priority)}
                 </span>
             </td>
-            <td>${formatDate(ticket.created_at)}</td>
             <td>
-                <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary" onclick="editTicket(${ticket.id})" title="Edit">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-outline-danger" onclick="deleteTicket(${ticket.id})" title="Delete">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
+                ${ticket.assignee_name ? `
+                    <span class="text-primary">
+                        <i class="fas fa-user me-1"></i>${escapeHtml(ticket.assignee_name)}
+                    </span>
+                ` : '<span class="text-muted"><i class="fas fa-user-slash me-1"></i>Unassigned</span>'}
             </td>
-        </tr>
-    `).join('');
+            <td>${formatDate(ticket.created_at)}</td>
+        </tr>`
+    }).join('');
 }
 
 function applyFilters() {
@@ -110,97 +137,57 @@ function applyFilters() {
     updateTicketsTable();
 }
 
-async function handleCreateTicket(e) {
-    e.preventDefault();
-    
-    const formData = {
-        title: document.getElementById('ticketTitle').value,
-        description: document.getElementById('ticketDescription').value,
-        priority: document.getElementById('ticketPriority').value,
-        status: document.getElementById('ticketStatus').value
+// API helper function
+async function apiRequest(url, options = {}) {
+    const defaultOptions = {
+        headers: {
+            'Content-Type': 'application/json',
+        },
     };
 
-    try {
-        const newTicket = await apiRequest('/api/tickets', {
-            method: 'POST',
-            body: JSON.stringify(formData)
-        });
-
-        allTickets.unshift(newTicket);
-        applyFilters();
-        updateStats();
-        
-        // Reset form and close modal
-        document.getElementById('createTicketForm').reset();
-        bootstrap.Modal.getInstance(document.getElementById('createTicketModal')).hide();
-        
-        showToast('Ticket created successfully!', 'success');
-    } catch (error) {
-        showToast('Failed to create ticket: ' + error.message, 'error');
-    }
-}
-
-function editTicket(ticketId) {
-    const ticket = allTickets.find(t => t.id === ticketId);
-    if (!ticket) return;
-
-    document.getElementById('editTicketId').value = ticket.id;
-    document.getElementById('editTicketTitle').value = ticket.title;
-    document.getElementById('editTicketDescription').value = ticket.description || '';
-    document.getElementById('editTicketPriority').value = ticket.priority;
-    document.getElementById('editTicketStatus').value = ticket.status;
-
-    new bootstrap.Modal(document.getElementById('editTicketModal')).show();
-}
-
-async function handleEditTicket(e) {
-    e.preventDefault();
+    const response = await fetch(url, { ...defaultOptions, ...options });
     
-    const ticketId = document.getElementById('editTicketId').value;
-    const formData = {
-        title: document.getElementById('editTicketTitle').value,
-        description: document.getElementById('editTicketDescription').value,
-        priority: document.getElementById('editTicketPriority').value,
-        status: document.getElementById('editTicketStatus').value
-    };
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Request failed' }));
+        throw new Error(error.error || `HTTP ${response.status}`);
+    }
 
-    try {
-        const updatedTicket = await apiRequest(`/api/tickets/${ticketId}`, {
-            method: 'PUT',
-            body: JSON.stringify(formData)
-        });
+    return response.json();
+}
 
-        // Update ticket in local array
-        const index = allTickets.findIndex(t => t.id == ticketId);
-        if (index !== -1) {
-            allTickets[index] = updatedTicket;
-            applyFilters();
-            updateStats();
-        }
-        
-        bootstrap.Modal.getInstance(document.getElementById('editTicketModal')).hide();
-        showToast('Ticket updated successfully!', 'success');
-    } catch (error) {
-        showToast('Failed to update ticket: ' + error.message, 'error');
+// Show toast notifications
+function showToast(message, type = 'info') {
+    // Simple implementation - you can replace with a proper toast library
+    console.log(`${type.toUpperCase()}: ${message}`);
+    
+    // For now, use alerts for important messages
+    if (type === 'error') {
+        alert('Error: ' + message);
+    } else if (type === 'success' && message.includes('successfully')) {
+        // Only show success alerts for important actions
+        alert(message);
     }
 }
 
-async function deleteTicket(ticketId) {
-    if (!confirm('Are you sure you want to delete this ticket?')) return;
+// Utility functions
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML;
+}
 
-    try {
-        await apiRequest(`/api/tickets/${ticketId}`, {
-            method: 'DELETE'
-        });
+function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
 
-        allTickets = allTickets.filter(t => t.id !== ticketId);
-        applyFilters();
-        updateStats();
-        
-        showToast('Ticket deleted successfully!', 'success');
-    } catch (error) {
-        showToast('Failed to delete ticket: ' + error.message, 'error');
-    }
+function formatDate(dateString) {
+    return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
 }
 
 function showLoading(show) {

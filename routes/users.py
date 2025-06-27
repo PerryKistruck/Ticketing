@@ -4,13 +4,13 @@ from auth.auth_utils import login_required, get_current_user
 
 users_bp = Blueprint('users', __name__)
 
-@users_bp.route('/users', methods=['GET'])
+@users_bp.route('/', methods=['GET'])
 @login_required
 def get_users():
     users = User.query.all()
     return jsonify([user.to_dict() for user in users])
 
-@users_bp.route('/users', methods=['POST'])
+@users_bp.route('/', methods=['POST'])
 def create_user():
     # This endpoint is now mainly for admin use, regular users should use /register
     data = request.get_json()
@@ -40,7 +40,7 @@ def create_user():
         db.session.rollback()
         return jsonify({'error': str(e)}), 400
 
-@users_bp.route('/users/<int:user_id>', methods=['GET'])
+@users_bp.route('/<int:user_id>', methods=['GET'])
 @login_required
 def get_user(user_id):
     current_user = get_current_user()
@@ -51,7 +51,7 @@ def get_user(user_id):
     user = User.query.get_or_404(user_id)
     return jsonify(user.to_dict())
 
-@users_bp.route('/users/<int:user_id>', methods=['PUT'])
+@users_bp.route('/<int:user_id>', methods=['PUT'])
 @login_required
 def update_user(user_id):
     current_user = get_current_user()
@@ -75,7 +75,7 @@ def update_user(user_id):
         db.session.rollback()
         return jsonify({'error': str(e)}), 400
 
-@users_bp.route('/users/<int:user_id>', methods=['DELETE'])
+@users_bp.route('/<int:user_id>', methods=['DELETE'])
 @login_required
 def delete_user(user_id):
     current_user = get_current_user()
@@ -91,7 +91,7 @@ def delete_user(user_id):
         db.session.rollback()
         return jsonify({'error': str(e)}), 400
 
-@users_bp.route('/users/<int:user_id>/tickets', methods=['GET'])
+@users_bp.route('/<int:user_id>/tickets', methods=['GET'])
 @login_required
 def get_user_tickets(user_id):
     current_user = get_current_user()

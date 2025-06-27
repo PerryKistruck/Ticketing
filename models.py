@@ -14,10 +14,12 @@ class User(db.Model):
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
     is_active = db.Column(db.Boolean, default=True)
+    is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Relationship
-    tickets = db.relationship('Ticket', backref='user', lazy=True, cascade='all, delete-orphan')
+    # Relationships
+    tickets = db.relationship('Ticket', foreign_keys='Ticket.user_id', backref='user', lazy=True, cascade='all, delete-orphan')
+    assigned_tickets = db.relationship('Ticket', foreign_keys='Ticket.assigned_to', backref='assignee', lazy=True)
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -33,6 +35,7 @@ class User(db.Model):
             'first_name': self.first_name,
             'last_name': self.last_name,
             'is_active': self.is_active,
+            'is_admin': self.is_admin,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
@@ -45,8 +48,11 @@ class Ticket(db.Model):
     status = db.Column(db.String(20), default='open')
     priority = db.Column(db.String(20), default='medium')
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    assigned_to = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # The relationships are defined in the User model with proper foreign_keys specified
     
     def to_dict(self):
         return {
@@ -56,6 +62,9 @@ class Ticket(db.Model):
             'status': self.status,
             'priority': self.priority,
             'user_id': self.user_id,
+            'assigned_to': self.assigned_to,
+            'assignee_name': f"{self.assignee.first_name} {self.assignee.last_name}" if self.assignee else None,
+            'user_name': f"{self.user.first_name} {self.user.last_name}",
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
