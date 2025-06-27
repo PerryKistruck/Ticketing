@@ -36,6 +36,15 @@ function setupEventListeners() {
     
     if (statusFilter) statusFilter.addEventListener('change', applyFilters);
     if (priorityFilter) priorityFilter.addEventListener('change', applyFilters);
+
+    // Edit ticket form
+    const editForm = document.getElementById('editTicketForm');
+    if (editForm) {
+        editForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            updateTicket();
+        });
+    }
 }
 
 async function loadTickets() {
@@ -88,6 +97,8 @@ function updateTicketsTable() {
     noTickets.style.display = 'none';
 
     tbody.innerHTML = filteredTickets.map(ticket => {
+        // Check if user can edit this ticket (created by them or assigned to them)
+        const canEdit = currentUser && (ticket.user_id === currentUser.id || ticket.assigned_to === currentUser.id);
         
         return `
         <tr class="fade-in">
@@ -120,6 +131,13 @@ function updateTicketsTable() {
                 ` : '<span class="text-muted"><i class="fas fa-user-slash me-1"></i>Unassigned</span>'}
             </td>
             <td>${formatDate(ticket.created_at)}</td>
+            <td>
+                ${canEdit ? `
+                    <button class="btn btn-outline-primary btn-sm" onclick="editTicket(${ticket.id})" title="Edit Ticket">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                ` : '<span class="text-muted"><i class="fas fa-lock"></i></span>'}
+            </td>
         </tr>`
     }).join('');
 }
@@ -135,6 +153,88 @@ function applyFilters() {
     });
 
     updateTicketsTable();
+}
+
+// Edit ticket functionality for regular users
+function editTicket(ticketId) {
+    const ticket = allTickets.find(t => t.id === ticketId);
+    if (!ticket) return;
+
+    // Check if user can edit this ticket
+    if (!currentUser || (ticket.user_id !== currentUser.id && ticket.assigned_to !== currentUser.id)) {
+        showToast('You can only edit tickets you created or that are assigned to you.', 'error');
+        return;
+    }
+
+    document.getElementById('editTicketId').value = ticket.id;
+    document.getElementById('editTicketTitle').value = ticket.title;
+    document.getElementById('editTicketDescription').value = ticket.description || '';
+    document.getElementById('editTicketPriority').value = ticket.priority;
+    
+    // Only set status if the field exists (admin users only)
+    const statusField = document.getElementById('editTicketStatus');
+    if (statusField) {
+        statusField.value = ticket.status;
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('editTicketModal'));
+    modal.show();
+}
+
+async function updateTicket() {
+    const id = document.getElementById('editTicketId').value;
+    const title = document.getElementById('editTicketTitle').value;
+    const description = document.getElementById('editTicketDescription').value;
+    const priority = document.getElementById('editTicketPriority').value;
+    
+    // Prepare the request body
+    const updateData = {
+        title,
+        description,
+        priority
+    };
+    
+    // Only include status if the field exists (admin users only)
+    const statusField = document.getElementById('editTicketStatus');
+    if (statusField) {
+        updateData.status = statusField.value;
+    }
+
+    try {
+        const response = await fetch(`/api/tickets/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updateData)
+        });
+
+        if (response.ok) {
+            const updatedTicket = await response.json();
+            
+            // Update the ticket in our local arrays
+            const ticketIndex = allTickets.findIndex(t => t.id === parseInt(id));
+            if (ticketIndex !== -1) {
+                allTickets[ticketIndex] = updatedTicket;
+            }
+            
+            // Close modal and refresh display
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editTicketModal'));
+            modal.hide();
+            
+            // Reapply filters and update display
+            applyFilters();
+            updateStats();
+            
+            showToast('Ticket updated successfully!', 'success');
+        } else {
+            const error = await response.json();
+            showToast(error.error || 'Failed to update ticket', 'error');
+        }
+    } catch (error) {
+        console.error('Error updating ticket:', error);
+        showToast('Error updating ticket: ' + error.message, 'error');
+    }
 }
 
 // API helper function

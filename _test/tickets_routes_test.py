@@ -234,7 +234,7 @@ class TestTicketsRoutes(unittest.TestCase):
         
         update_data = {
             'title': 'Updated User Ticket',
-            'status': 'in_progress',
+            'status': 'in_progress',  # This should be ignored for non-admin
             'priority': 'high'
         }
         
@@ -243,7 +243,7 @@ class TestTicketsRoutes(unittest.TestCase):
         
         data = response.get_json()
         self.assertEqual(data['title'], 'Updated User Ticket')
-        self.assertEqual(data['status'], 'in_progress')
+        self.assertEqual(data['status'], 'open')  # Status should remain unchanged
         self.assertEqual(data['priority'], 'high')
     
     def test_update_ticket_assignee(self):
@@ -253,14 +253,16 @@ class TestTicketsRoutes(unittest.TestCase):
             sess['user_id'] = self.user.id
         
         update_data = {
-            'status': 'in_progress'
+            'title': 'Updated by assignee',
+            'status': 'in_progress'  # This should be ignored for non-admin
         }
         
         response = self.client.put(f'/api/tickets/{self.assigned_ticket.id}', json=update_data)
         self.assertEqual(response.status_code, 200)
         
         data = response.get_json()
-        self.assertEqual(data['status'], 'in_progress')
+        self.assertEqual(data['title'], 'Updated by assignee')
+        self.assertEqual(data['status'], 'open')  # Status should remain unchanged
     
     def test_update_ticket_unauthorized(self):
         """Test updating a ticket without proper access."""
@@ -274,7 +276,108 @@ class TestTicketsRoutes(unittest.TestCase):
         
         response = self.client.put(f'/api/tickets/{self.other_user_ticket.id}', json=update_data)
         self.assertEqual(response.status_code, 403)
-    
+
+    def test_update_ticket_user_cannot_change_assignment(self):
+        """Test that non-admin users cannot change ticket assignments."""
+        # Login as ticket owner
+        with self.client.session_transaction() as sess:
+            sess['user_id'] = self.user.id
+        
+        update_data = {
+            'title': 'Updated Title',
+            'assigned_to': self.admin.id  # Try to assign to admin
+        }
+        
+        response = self.client.put(f'/api/tickets/{self.user_ticket.id}', json=update_data)
+        self.assertEqual(response.status_code, 200)
+        
+        # Title should be updated but assignment should be ignored
+        data = response.get_json()
+        self.assertEqual(data['title'], 'Updated Title')
+        self.assertIsNone(data['assigned_to'])  # Assignment should remain unchanged
+
+    def test_update_ticket_admin_can_change_assignment(self):
+        """Test that admin users can change ticket assignments."""
+        # Login as admin
+        with self.client.session_transaction() as sess:
+            sess['user_id'] = self.admin.id
+        
+        update_data = {
+            'title': 'Admin Updated Title',
+            'assigned_to': self.admin.id
+        }
+        
+        response = self.client.put(f'/api/tickets/{self.user_ticket.id}', json=update_data)
+        self.assertEqual(response.status_code, 200)
+        
+        data = response.get_json()
+        self.assertEqual(data['title'], 'Admin Updated Title')
+        self.assertEqual(data['assigned_to'], self.admin.id)
+
+    def test_update_ticket_admin_can_change_status(self):
+        """Test that admin users can change ticket status."""
+        # Login as admin
+        with self.client.session_transaction() as sess:
+            sess['user_id'] = self.admin.id
+        
+        update_data = {
+            'title': 'Admin Updated Title',
+            'status': 'closed'
+        }
+        
+        response = self.client.put(f'/api/tickets/{self.user_ticket.id}', json=update_data)
+        self.assertEqual(response.status_code, 200)
+        
+        data = response.get_json()
+        self.assertEqual(data['title'], 'Admin Updated Title')
+        self.assertEqual(data['status'], 'closed')
+
+    def test_update_ticket_user_can_edit_all_allowed_fields(self):
+        """Test that users can edit title, description, and priority but not status of their tickets."""
+        # Login as ticket owner
+        with self.client.session_transaction() as sess:
+            sess['user_id'] = self.user.id
+        
+        update_data = {
+            'title': 'Completely Updated Title',
+            'description': 'Completely updated description with more details',
+            'status': 'closed',  # This should be ignored for non-admin
+            'priority': 'urgent'
+        }
+        
+        response = self.client.put(f'/api/tickets/{self.user_ticket.id}', json=update_data)
+        self.assertEqual(response.status_code, 200)
+        
+        data = response.get_json()
+        self.assertEqual(data['title'], 'Completely Updated Title')
+        self.assertEqual(data['description'], 'Completely updated description with more details')
+        self.assertEqual(data['status'], 'open')  # Status should remain unchanged
+        self.assertEqual(data['priority'], 'urgent')
+        self.assertEqual(data['user_id'], self.user.id)  # User should remain the same
+
+    def test_update_ticket_assignee_can_edit_title_and_priority_but_not_status(self):
+        """Test that users assigned to tickets can edit title and priority but not status."""
+        # Login as assignee
+        with self.client.session_transaction() as sess:
+            sess['user_id'] = self.user.id
+        
+        update_data = {
+            'status': 'closed',  # This should be ignored for non-admin
+            'priority': 'low',
+            'title': 'Updated by assignee'
+        }
+        
+        response = self.client.put(f'/api/tickets/{self.assigned_ticket.id}', json=update_data)
+        self.assertEqual(response.status_code, 200)
+        
+        data = response.get_json()
+        self.assertEqual(data['status'], 'open')  # Status should remain unchanged
+        self.assertEqual(data['priority'], 'low')
+        self.assertEqual(data['title'], 'Updated by assignee')
+        # Ensure other fields remain unchanged
+        self.assertEqual(data['user_id'], self.other_user.id)
+        self.assertEqual(data['assigned_to'], self.user.id)
+
     def test_delete_ticket_admin(self):
         """Test deleting a ticket as admin."""
         # Login as admin

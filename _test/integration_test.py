@@ -304,6 +304,90 @@ class TestTicketingSystemIntegration(unittest.TestCase):
         self.assertEqual(tickets[0]['title'], 'Updated Consistency Test Ticket')
         self.assertEqual(tickets[0]['status'], 'in_progress')
 
+    def test_user_ticket_edit_workflow(self):
+        """Test complete workflow for users editing their own tickets."""
+        # Create regular user and admin
+        user = create_test_user(username="edituser", email="edit@example.com")
+        admin = create_test_user(username="admin", email="admin@example.com", is_admin=True)
+        assignee_admin = create_test_user(username="assignee", email="assignee@example.com", is_admin=True)
+        
+        # Login as user
+        with self.client.session_transaction() as sess:
+            sess['user_id'] = user.id
+        
+        # 1. Create a ticket
+        ticket_data = {
+            'title': 'User Edit Test Ticket',
+            'description': 'Original description',
+            'priority': 'medium'
+        }
+        
+        response = self.client.post('/api/tickets/', json=ticket_data)
+        self.assertEqual(response.status_code, 201)
+        ticket = response.get_json()
+        ticket_id = ticket['id']
+        
+        # 2. User updates their own ticket - should work
+        update_data = {
+            'title': 'Updated by User',
+            'description': 'Updated description by user',
+            'status': 'in_progress',
+            'priority': 'high'
+        }
+        
+        response = self.client.put(f'/api/tickets/{ticket_id}', json=update_data)
+        self.assertEqual(response.status_code, 200)
+        updated_ticket = response.get_json()
+        
+        self.assertEqual(updated_ticket['title'], 'Updated by User')
+        self.assertEqual(updated_ticket['description'], 'Updated description by user')
+        self.assertEqual(updated_ticket['status'], 'in_progress')
+        self.assertEqual(updated_ticket['priority'], 'high')
+        self.assertEqual(updated_ticket['user_id'], user.id)
+        self.assertIsNone(updated_ticket['assigned_to'])  # User cannot assign
+        
+        # 3. User tries to assign ticket - should be ignored
+        assignment_attempt = {
+            'title': 'Trying to assign',
+            'assigned_to': admin.id
+        }
+        
+        response = self.client.put(f'/api/tickets/{ticket_id}', json=assignment_attempt)
+        self.assertEqual(response.status_code, 200)
+        result = response.get_json()
+        
+        self.assertEqual(result['title'], 'Trying to assign')
+        self.assertIsNone(result['assigned_to'])  # Assignment should be ignored
+        
+        # 4. Admin assigns ticket to another admin user
+        with self.client.session_transaction() as sess:
+            sess['user_id'] = admin.id
+        
+        admin_assignment = {
+            'assigned_to': assignee_admin.id  # Assign to admin user
+        }
+        
+        response = self.client.put(f'/api/tickets/admin/assign/{ticket_id}', json=admin_assignment)
+        self.assertEqual(response.status_code, 200)
+        
+        # 5. User can still edit the assigned ticket (since they created it)
+        with self.client.session_transaction() as sess:
+            sess['user_id'] = user.id
+        
+        final_update = {
+            'status': 'closed',
+            'description': 'Work completed'
+        }
+        
+        response = self.client.put(f'/api/tickets/{ticket_id}', json=final_update)
+        self.assertEqual(response.status_code, 200)
+        final_ticket = response.get_json()
+        
+        self.assertEqual(final_ticket['status'], 'closed')
+        self.assertEqual(final_ticket['description'], 'Work completed')
+        self.assertEqual(final_ticket['assigned_to'], assignee_admin.id)  # Assignment preserved
+        self.assertEqual(final_ticket['user_id'], user.id)
+
 
 if __name__ == '__main__':
     unittest.main()

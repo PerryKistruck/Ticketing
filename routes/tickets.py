@@ -109,7 +109,11 @@ def update_ticket(ticket_id):
     try:
         ticket.title = data.get('title', ticket.title)
         ticket.description = data.get('description', ticket.description)
-        ticket.status = data.get('status', ticket.status)
+        
+        # Only admins can change status
+        if current_user.is_admin and 'status' in data:
+            ticket.status = data.get('status', ticket.status)
+        
         ticket.priority = data.get('priority', ticket.priority)
         
         # Only admins can change assignment

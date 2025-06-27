@@ -131,6 +131,7 @@
                         <th>Priority</th>
                         <th>Assigned To</th>
                         <th>Created</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="ticketsTableBody">
@@ -146,6 +147,9 @@
 
 <!-- Create Ticket Modal -->
 {% include 'components/create_ticket_modal.html' %}
+
+<!-- Edit Ticket Modal -->
+{% include 'components/edit_ticket_modal.html' %}
 {% endblock %}
 
 {% block scripts %}
