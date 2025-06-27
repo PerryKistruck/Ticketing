@@ -1,100 +1,57 @@
-# IGD Support - Advanced Support System
+# IGD Support System
 
-A comprehensive web-based support system built with Flask, featuring role-based access control and administrative capabilities.
+A Flask-based web application for support ticket management with role-based access control.
 
-## 🌟 Features
+## Features
 
-### Core Functionality
-- **Ticket Management**: Create, view, edit, and track support tickets
-- **User Authentication**: Secure login/logout with session management  
-- **Responsive Design**: Modern Bootstrap-based UI that works on all devices
-- **Real-time Updates**: Dynamic dashboard with live ticket statistics
+- Ticket management (CRUD operations)
+- User authentication and authorization
+- Administrative dashboard and controls
+- Role-based permissions (users and administrators)
+- Bootstrap-responsive interface
 
-### Administrator Features ⭐ NEW
-- **Admin Dashboard**: Dedicated interface for managing all system tickets
-- **Ticket Assignment**: Assign tickets to administrators for handling
-- **User Role Management**: Designate users as administrators
-- **Advanced Permissions**: Admins can view, edit, assign, and delete any ticket
-- **System Statistics**: Comprehensive reporting and ticket management
-
-### User Roles
-- **Regular Users**: Can create and manage their own tickets
-- **Administrators**: Full system access with ticket management capabilities
-
-## 🚀 Quick Start
+## Installation
 
 ### Prerequisites
 - Python 3.11+
-- PostgreSQL (or SQLite for development)
-- Virtual environment (recommended)
+- PostgreSQL or SQLite
+- Virtual environment
 
-### Installation
-1. Clone the repository
-2. Create a virtual environment: `python -m venv .venv`
-3. Activate the environment: `.venv\Scripts\activate` (Windows) or `source .venv/bin/activate` (Linux/Mac)
+### Setup
+1. Clone repository
+2. Create virtual environment: `python -m venv .venv`
+3. Activate environment: `.venv\Scripts\activate`
 4. Install dependencies: `pip install -r requirements.txt`
-5. Set up the database (see Database Setup below)
-6. Create your first admin user: `python create_admin.py admin admin@example.com password123 Admin User`
-7. Run the application: `python main.py`
+5. Configure database (run SQL scripts in `setup/`)
+6. Create admin user: `python create_admin.py admin admin@example.com password123 "Admin User"`
+7. Start application: `python main.py`
 
-### Database Setup
-- For PostgreSQL: Run `setup/database_setup.sql` and then `setup/admin_migration.sql`
-- For SQLite: The app will create tables automatically on first run
+## Usage
 
-## 📱 Usage
+### Users
+- Register/login to access personal dashboard
+- Create and manage personal tickets
+- Edit ticket details and status
 
-### For Regular Users
-1. Register an account or log in
-2. Access your dashboard to view your tickets
-3. Create new tickets using the "New Ticket" button
-4. Edit your own tickets as needed
+### Administrators  
+- Access admin dashboard for system-wide ticket management
+- Assign tickets and manage user roles
+- Perform administrative operations on all tickets
 
-### For Administrators
-1. Log in with an admin account
-2. Access the admin dashboard via the crown icon in navigation
-3. View all system tickets with advanced filtering
-4. Assign tickets to yourself or other administrators
-5. Manage ticket status, priority, and resolution
+## Architecture
 
-## 🔧 Technical Details
-
-### Architecture
-- **Backend**: Flask (Python)
-- **Frontend**: Bootstrap 5, JavaScript (ES6)
-- **Database**: PostgreSQL/SQLite with SQLAlchemy ORM
+- **Backend**: Flask with SQLAlchemy ORM
+- **Frontend**: Bootstrap 5, JavaScript
+- **Database**: PostgreSQL/SQLite
 - **Authentication**: Session-based with password hashing
+- **Security**: Role-based access control, input validation
 
-### Key Files
-- `main.py` - Application entry point and routes
-- `models.py` - Database models and relationships
-- `auth/` - Authentication and authorization logic
-- `routes/` - API endpoints for ticket operations
-- `templates/` - HTML templates with Jinja2
-- `static/` - CSS, JavaScript, and assets
+## Project Structure
 
-## 🔐 Security Features
-- Password hashing with Werkzeug
-- Session-based authentication
-- Role-based access control
-- SQL injection protection via ORM
-- CSRF protection on forms
-- Input validation and sanitization
-
-## 📖 API Documentation
-See `ADMIN_FEATURES.md` for detailed API endpoint documentation and admin feature specifications.
-
-## 🤝 Contributing
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Submit a pull request
-
-## 📄 License
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🆘 Support
-For support and questions:
-- Check the documentation in `ADMIN_FEATURES.md`
-- Review the setup scripts in the `setup/` directory
-- Contact your system administrator for access issues
+- `main.py` - Application entry point
+- `models.py` - Database models
+- `auth/` - Authentication modules
+- `routes/` - API endpoints
+- `templates/` - HTML templates
+- `static/` - Frontend assets
+- `_test/` - Test suite
