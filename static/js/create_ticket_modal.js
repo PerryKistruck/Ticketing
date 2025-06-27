@@ -1,6 +1,42 @@
 // Create Ticket Modal Functionality
 // This module provides shared functionality for the create ticket modal across all pages
 
+// API helper function (standalone version for modal)
+async function apiRequest(url, options = {}) {
+    const defaultOptions = {
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin'  // Important for session cookies
+    };
+
+    const finalOptions = {
+        ...defaultOptions,
+        ...options,
+        headers: {
+            ...defaultOptions.headers,
+            ...options.headers
+        }
+    };
+
+    try {
+        const response = await fetch(url, finalOptions);
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: 'Request failed' }));
+            throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        // Re-throw with more context for network errors
+        if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+            throw new Error('Network error: Unable to connect to server. Please check your connection.');
+        }
+        throw error;
+    }
+}
+
 class CreateTicketModal {
     constructor(options = {}) {
         this.redirectAfterCreate = options.redirectAfterCreate || false;
@@ -116,6 +152,21 @@ class CreateTicketModal {
             }
         } catch (error) {
             console.error('Failed to load assignee options:', error);
+            
+            // Show user-friendly error message
+            if (typeof showToast === 'function') {
+                if (error.message.includes('Network error')) {
+                    showToast('Unable to load assignee options. Network connection issue.', 'warning');
+                } else {
+                    showToast('Unable to load assignee options. Using default options.', 'warning');
+                }
+            }
+            
+            // Ensure at least "Unassigned" option exists
+            const assigneeSelect = document.getElementById('ticketAssignee');
+            if (assigneeSelect && assigneeSelect.children.length === 0) {
+                assigneeSelect.innerHTML = '<option value="">Unassigned</option>';
+            }
         }
     }
 

@@ -11,10 +11,8 @@ logger = logging.getLogger(__name__)
 def get_tickets():
     try:
         current_user = get_current_user()
-        logger.info(f"Fetching tickets for user: {current_user.id if current_user else 'None'}")
         
         if not current_user:
-            logger.error("No current user found in get_tickets")
             return jsonify({"error": "User not authenticated"}), 401
         
         # This endpoint always shows only personal tickets (created by user OR assigned to user)
@@ -23,8 +21,6 @@ def get_tickets():
             (Ticket.user_id == current_user.id) | 
             (Ticket.assigned_to == current_user.id)
         ).all()
-        
-        logger.info(f"Found {len(tickets)} tickets for user {current_user.id}")
         
         return jsonify([ticket.to_dict() for ticket in tickets])
     except Exception as e:

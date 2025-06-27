@@ -43,27 +43,6 @@ with app.app_context():
 def inject_user():
     return dict(current_user=get_current_user())
 
-@app.route('/debug/session')
-def debug_session():
-    """Debug endpoint to check session and user status"""
-    try:
-        session_data = dict(session)
-        current_user = get_current_user()
-        
-        debug_info = {
-            "session_data": session_data,
-            "has_user_id": 'user_id' in session,
-            "user_id_value": session.get('user_id'),
-            "current_user": current_user.to_dict() if current_user else None,
-            "secret_key_set": bool(app.config.get('SECRET_KEY')),
-            "database_uri": app.config.get('SQLALCHEMY_DATABASE_URI', 'Not set')[:50] + "..." if app.config.get('SQLALCHEMY_DATABASE_URI') else 'Not set'
-        }
-        
-        return jsonify(debug_info)
-    except Exception as e:
-        logger.error(f"Debug session error: {str(e)}")
-        return jsonify({"error": str(e)}), 500
-
 @app.route('/health')
 def health_check():
     try:

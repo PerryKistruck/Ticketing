@@ -59,8 +59,25 @@ async function loadTickets() {
         updateDashboard();
         showLoading(false);
     } catch (error) {
-        showToast('Failed to load tickets: ' + error.message, 'error');
+        // More detailed error message
+        let errorMessage = 'Failed to load tickets';
+        if (error.message.includes('401')) {
+            errorMessage = 'Authentication required. Please log in again.';
+        } else if (error.message.includes('403')) {
+            errorMessage = 'You do not have permission to view tickets.';
+        } else if (error.message.includes('500')) {
+            errorMessage = 'Server error. Please try again later.';
+        } else if (error.message.includes('Failed to fetch')) {
+            errorMessage = 'Network error. Please check your connection and try again.';
+        }
+        
+        showToast(errorMessage, 'error');
         showLoading(false);
+        
+        // Show empty state
+        allTickets = [];
+        filteredTickets = [];
+        updateDashboard();
     }
 }
 
@@ -243,16 +260,35 @@ async function apiRequest(url, options = {}) {
         headers: {
             'Content-Type': 'application/json',
         },
+        credentials: 'same-origin'  // Important for session cookies
     };
 
-    const response = await fetch(url, { ...defaultOptions, ...options });
-    
-    if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Request failed' }));
-        throw new Error(error.error || `HTTP ${response.status}`);
-    }
+    const finalOptions = {
+        ...defaultOptions,
+        ...options,
+        headers: {
+            ...defaultOptions.headers,
+            ...options.headers
+        }
+    };
 
-    return response.json();
+    try {
+        const response = await fetch(url, finalOptions);
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: 'Request failed' }));
+            throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        // Only log in development or for debugging
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            console.error('API Request Error:', error);
+            console.error('URL:', url);
+        }
+        throw error;
+    }
 }
 
 // Show toast notifications
