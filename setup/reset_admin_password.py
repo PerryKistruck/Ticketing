@@ -59,7 +59,7 @@ def reset_password(user, new_password):
 def main():
     """Main function to run the password reset utility."""
     print("=" * 60)
-    print("TicketPro Admin Password Reset Utility")
+    print("IGD Support Admin Password Reset Utility")
     print("=" * 60)
     
     app = create_app()

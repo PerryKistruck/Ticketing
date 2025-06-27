@@ -1,6 +1,6 @@
-# TicketPro - Advanced Ticketing System
+# IGD Support - Advanced Support System
 
-A comprehensive web-based ticketing system built with Flask, featuring role-based access control and administrative capabilities.
+A comprehensive web-based support system built with Flask, featuring role-based access control and administrative capabilities.
 
 ## 🌟 Features
 
@@ -15,7 +15,7 @@ A comprehensive web-based ticketing system built with Flask, featuring role-base
 - **Ticket Assignment**: Assign tickets to administrators for handling
 - **User Role Management**: Designate users as administrators
 - **Advanced Permissions**: Admins can view, edit, assign, and delete any ticket
-- **System Statistics**: Comprehensive reporting and analytics
+- **System Statistics**: Comprehensive reporting and ticket management
 
 ### User Roles
 - **Regular Users**: Can create and manage their own tickets

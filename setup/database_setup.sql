@@ -1,9 +1,9 @@
--- TicketPro Database Setup Script for PostgreSQL
--- This script creates all necessary tables and indexes for the ticketing system
+-- IGD Support Database Setup Script for PostgreSQL
+-- This script creates all necessary tables and indexes for the support system
 
 -- Create database (run this separately if needed)
--- CREATE DATABASE ticketpro;
--- \c ticketpro;
+-- CREATE DATABASE igdsupport;
+-- \c igdsupport;
 
 -- Drop tables if they exist (for clean setup)
 DROP TABLE IF EXISTS tickets CASCADE;
@@ -109,7 +109,7 @@ FROM tickets;
 -- Insert some sample data (optional - remove if not needed)
 -- Note: You'll need to update the password hashes with actual hashed passwords
 INSERT INTO users (username, email, password_hash, first_name, last_name, is_active) VALUES
-('admin', 'admin@ticketpro.com', 'pbkdf2:sha256:600000$placeholder$hash', 'Admin', 'User', TRUE),
+('admin', 'admin@igdsupport.com', 'pbkdf2:sha256:600000$placeholder$hash', 'Admin', 'User', TRUE),
 ('john_doe', 'john@example.com', 'pbkdf2:sha256:600000$placeholder$hash', 'John', 'Doe', TRUE),
 ('jane_smith', 'jane@example.com', 'pbkdf2:sha256:600000$placeholder$hash', 'Jane', 'Smith', TRUE),
 ('test_user', 'test@example.com', 'pbkdf2:sha256:600000$placeholder$hash', 'Test', 'User', TRUE);

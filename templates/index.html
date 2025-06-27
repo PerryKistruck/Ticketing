@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}Home - Ticketing System{% endblock %}
+{% block title %}Home - IGD Support{% endblock %}
 
 {% block content %}
 <div class="hero-section bg-primary text-white py-5 rounded mb-5">
     <div class="container text-center">
         <h1 class="display-4 mb-4">
-            <i class="fas fa-ticket-alt me-3"></i>TicketPro
+            <i class="fas fa-ticket-alt me-3"></i>IGD Support
         </h1>
         {% if not current_user %}
         <p class="lead mb-4">Your comprehensive ticket management solution for seamless support and issue tracking</p>
@@ -19,7 +19,7 @@
             </a>
         </div>
         {% elif current_user.is_admin %}
-        <p class="lead mb-4">Welcome back, Administrator! Manage tickets, users, and system analytics</p>
+        <p class="lead mb-4">Welcome back, Administrator! Manage tickets and users</p>
         <div class="d-flex justify-content-center gap-3">
             <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-lg btn-action">
                 <i class="fas fa-tachometer-alt me-2"></i>My Dashboard
@@ -87,33 +87,24 @@
 </div>
 {% endif %}
 
-<!-- Additional Features for Admin Users -->
+<!-- Administrator Features -->
 {% if current_user and current_user.is_admin %}
 <div class="row mb-5">
     <div class="col-12 mb-4">
         <h3 class="text-center mb-4">
-            <i class="fas fa-crown me-2 text-warning"></i>Administrator Capabilities
+            <i class="fas fa-crown me-2 text-warning"></i>Administrator Dashboard
         </h3>
     </div>
     
-    <div class="col-md-6 mb-4">
-        <div class="card h-100 shadow-sm border-warning">
+    <div class="col-md-8 mx-auto mb-4">
+        <div class="card shadow-sm border-warning">
             <div class="card-body text-center">
                 <i class="fas fa-users-cog fa-3x text-warning mb-3"></i>
-                <h5 class="card-title text-warning">System Management</h5>
-                <p class="card-text">View and manage all tickets system-wide, assign tickets to team members, and monitor overall system health.</p>
-                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-warning">Admin Dashboard</a>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-6 mb-4">
-        <div class="card h-100 shadow-sm border-info">
-            <div class="card-body text-center">
-                <i class="fas fa-chart-line fa-3x text-info mb-3"></i>
-                <h5 class="card-title text-info">Advanced Analytics</h5>
-                <p class="card-text">Access comprehensive reports, ticket statistics, user activity analytics, and performance metrics.</p>
-                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-info">View Analytics</a>
+                <h5 class="card-title text-warning">Admin Control Panel</h5>
+                <p class="card-text">Access the comprehensive admin dashboard to view and manage all tickets system-wide, assign tickets to team members, monitor system health, and oversee user management.</p>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-warning btn-lg">
+                    <i class="fas fa-crown me-2"></i>Access Admin Dashboard
+                </a>
             </div>
         </div>
     </div>
@@ -172,7 +163,7 @@
                     <i class="fas fa-shield-alt me-2 text-success"></i>Secure & Reliable
                 </h4>
                 <p class="card-text">
-                    Our ticketing system provides secure, real-time ticket management with role-based access control 
+                    Our support system provides secure, real-time ticket management with role-based access control 
                     and comprehensive tracking capabilities. Get started today to streamline your support process.
                 </p>
                 <div class="row mt-4">

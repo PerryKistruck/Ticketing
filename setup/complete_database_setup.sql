@@ -1,10 +1,10 @@
--- TicketPro Complete Database Setup Script for PostgreSQL
--- This script creates all necessary tables, indexes, views, and functions for the ticketing system
+-- IGD Support Complete Database Setup Script for PostgreSQL
+-- This script creates all necessary tables, indexes, views, and functions for the support system
 -- Includes both basic functionality and admin features
 
 -- Create database (run this separately if needed)
--- CREATE DATABASE ticketpro;
--- \c ticketpro;
+-- CREATE DATABASE igdsupport;
+-- \c igdsupport;
 
 -- Drop tables if they exist (for clean setup)
 DROP TABLE IF EXISTS tickets CASCADE;
@@ -259,11 +259,11 @@ FROM tickets;
 -- Insert sample users (including admin user)
 -- Note: You'll need to update the password hashes with actual hashed passwords
 INSERT INTO users (username, email, password_hash, first_name, last_name, is_admin, is_active) VALUES
-('admin', 'admin@ticketpro.com', 'pbkdf2:sha256:600000$placeholder$hash', 'System', 'Administrator', TRUE, TRUE),
+('admin', 'admin@igdsupport.com', 'pbkdf2:sha256:600000$placeholder$hash', 'System', 'Administrator', TRUE, TRUE),
 ('john_doe', 'john@example.com', 'pbkdf2:sha256:600000$placeholder$hash', 'John', 'Doe', FALSE, TRUE),
 ('jane_smith', 'jane@example.com', 'pbkdf2:sha256:600000$placeholder$hash', 'Jane', 'Smith', FALSE, TRUE),
 ('test_user', 'test@example.com', 'pbkdf2:sha256:600000$placeholder$hash', 'Test', 'User', FALSE, TRUE),
-('support_admin', 'support@ticketpro.com', 'pbkdf2:sha256:600000$placeholder$hash', 'Support', 'Admin', TRUE, TRUE);
+('support_admin', 'support@igdsupport.com', 'pbkdf2:sha256:600000$placeholder$hash', 'Support', 'Admin', TRUE, TRUE);
 
 -- Insert sample tickets with some assigned to admins
 INSERT INTO tickets (title, description, status, priority, user_id, assigned_to) VALUES
@@ -283,7 +283,7 @@ INSERT INTO tickets (title, description, status, priority, user_id, assigned_to)
 -- ============================================================================
 
 -- Display success message
-SELECT 'TicketPro Database Setup Completed Successfully!' as message;
+SELECT 'IGD Support Database Setup Completed Successfully!' as message;
 
 -- Display table information
 \d users
