@@ -21,10 +21,13 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function setupEventListeners() {
-    // Edit ticket form
-    document.getElementById('editTicketForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        updateTicket();
+    // Initialize edit ticket modal
+    initEditTicketModal({
+        onTicketUpdated: (updatedTicket) => {
+            // Reload tickets to refresh the display
+            loadTickets();
+        },
+        allTickets: tickets
     });
 
     // Assign ticket form
@@ -77,6 +80,12 @@ async function loadTickets() {
         if (response.ok) {
             tickets = await response.json();
             filteredTickets = [...tickets];
+            
+            // Update the edit modal's tickets array reference
+            if (editTicketModalInstance) {
+                editTicketModalInstance.updateTicketsArray(tickets);
+            }
+            
             displayTickets();
             updateStats();
         } else {
@@ -190,59 +199,6 @@ function clearFilters() {
     document.getElementById('assigneeFilter').value = '';
     filteredTickets = [...tickets];
     displayTickets();
-}
-
-function editTicket(ticketId) {
-    const ticket = tickets.find(t => t.id === ticketId);
-    if (!ticket) return;
-
-    document.getElementById('editTicketId').value = ticket.id;
-    document.getElementById('editTicketTitle').value = ticket.title;
-    document.getElementById('editTicketDescription').value = ticket.description || '';
-    document.getElementById('editTicketPriority').value = ticket.priority;
-    document.getElementById('editTicketStatus').value = ticket.status;
-    document.getElementById('editTicketAssignee').value = ticket.assigned_to || '';
-
-    const modal = new bootstrap.Modal(document.getElementById('editTicketModal'));
-    modal.show();
-}
-
-async function updateTicket() {
-    const id = document.getElementById('editTicketId').value;
-    const title = document.getElementById('editTicketTitle').value;
-    const description = document.getElementById('editTicketDescription').value;
-    const priority = document.getElementById('editTicketPriority').value;
-    const status = document.getElementById('editTicketStatus').value;
-    const assignedTo = document.getElementById('editTicketAssignee').value;
-
-    try {
-        const response = await fetch(`/api/tickets/${id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                title,
-                description,
-                priority,
-                status,
-                assigned_to: assignedTo || null
-            })
-        });
-
-        if (response.ok) {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('editTicketModal'));
-            modal.hide();
-            loadTickets();
-            showSuccess('Ticket updated successfully');
-        } else {
-            const error = await response.json();
-            showError(error.error || 'Failed to update ticket');
-        }
-    } catch (error) {
-        console.error('Error updating ticket:', error);
-        showError('Error updating ticket');
-    }
 }
 
 function showAssignModal(ticketId) {

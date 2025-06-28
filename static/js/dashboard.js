@@ -37,14 +37,21 @@ function setupEventListeners() {
     if (statusFilter) statusFilter.addEventListener('change', applyFilters);
     if (priorityFilter) priorityFilter.addEventListener('change', applyFilters);
 
-    // Edit ticket form
-    const editForm = document.getElementById('editTicketForm');
-    if (editForm) {
-        editForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            updateTicket();
-        });
-    }
+    // Initialize edit ticket modal
+    initEditTicketModal({
+        onTicketUpdated: (updatedTicket) => {
+            // Update the ticket in our local arrays
+            const ticketIndex = allTickets.findIndex(t => t.id === updatedTicket.id);
+            if (ticketIndex !== -1) {
+                allTickets[ticketIndex] = updatedTicket;
+            }
+            
+            // Reapply filters and update display
+            applyFilters();
+            updateStats();
+        },
+        allTickets: allTickets
+    });
 }
 
 async function loadTickets() {
@@ -56,6 +63,12 @@ async function loadTickets() {
         // No admin filtering needed here - backend handles it
         allTickets = tickets;
         filteredTickets = allTickets;
+        
+        // Update the edit modal's tickets array reference
+        if (editTicketModalInstance) {
+            editTicketModalInstance.updateTicketsArray(allTickets);
+        }
+        
         updateDashboard();
         showLoading(false);
     } catch (error) {
@@ -170,88 +183,6 @@ function applyFilters() {
     });
 
     updateTicketsTable();
-}
-
-// Edit ticket functionality for regular users
-function editTicket(ticketId) {
-    const ticket = allTickets.find(t => t.id === ticketId);
-    if (!ticket) return;
-
-    // Check if user can edit this ticket
-    if (!currentUser || (ticket.user_id !== currentUser.id && ticket.assigned_to !== currentUser.id)) {
-        showToast('You can only edit tickets you created or that are assigned to you.', 'error');
-        return;
-    }
-
-    document.getElementById('editTicketId').value = ticket.id;
-    document.getElementById('editTicketTitle').value = ticket.title;
-    document.getElementById('editTicketDescription').value = ticket.description || '';
-    document.getElementById('editTicketPriority').value = ticket.priority;
-    
-    // Only set status if the field exists (admin users only)
-    const statusField = document.getElementById('editTicketStatus');
-    if (statusField) {
-        statusField.value = ticket.status;
-    }
-
-    const modal = new bootstrap.Modal(document.getElementById('editTicketModal'));
-    modal.show();
-}
-
-async function updateTicket() {
-    const id = document.getElementById('editTicketId').value;
-    const title = document.getElementById('editTicketTitle').value;
-    const description = document.getElementById('editTicketDescription').value;
-    const priority = document.getElementById('editTicketPriority').value;
-    
-    // Prepare the request body
-    const updateData = {
-        title,
-        description,
-        priority
-    };
-    
-    // Only include status if the field exists (admin users only)
-    const statusField = document.getElementById('editTicketStatus');
-    if (statusField) {
-        updateData.status = statusField.value;
-    }
-
-    try {
-        const response = await fetch(`/api/tickets/${id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(updateData)
-        });
-
-        if (response.ok) {
-            const updatedTicket = await response.json();
-            
-            // Update the ticket in our local arrays
-            const ticketIndex = allTickets.findIndex(t => t.id === parseInt(id));
-            if (ticketIndex !== -1) {
-                allTickets[ticketIndex] = updatedTicket;
-            }
-            
-            // Close modal and refresh display
-            const modal = bootstrap.Modal.getInstance(document.getElementById('editTicketModal'));
-            modal.hide();
-            
-            // Reapply filters and update display
-            applyFilters();
-            updateStats();
-            
-            showToast('Ticket updated successfully!', 'success');
-        } else {
-            const error = await response.json();
-            showToast(error.error || 'Failed to update ticket', 'error');
-        }
-    } catch (error) {
-        console.error('Error updating ticket:', error);
-        showToast('Error updating ticket: ' + error.message, 'error');
-    }
 }
 
 // API helper function
