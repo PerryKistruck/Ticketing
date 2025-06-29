@@ -3,6 +3,17 @@
 
 // API helper function (standalone version for modal)
 async function apiRequest(url, options = {}) {
+    // Ensure URL uses the correct protocol and host
+    if (url.startsWith('/')) {
+        // Relative URL - ensure it uses the current protocol and host
+        url = (window.APP_CONFIG?.API_BASE_URL || (window.location.protocol + '//' + window.location.host)) + url;
+    } else if (url.startsWith('http://') || url.startsWith('https://')) {
+        // Absolute URL - ensure it uses HTTPS if current page is HTTPS
+        if (window.location.protocol === 'https:' && url.startsWith('http://')) {
+            url = url.replace('http://', 'https://');
+        }
+    }
+
     const defaultOptions = {
         headers: {
             'Content-Type': 'application/json',

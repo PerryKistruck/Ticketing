@@ -1,4 +1,4 @@
-from flask import Flask, render_template, session, redirect, url_for, jsonify
+from flask import Flask, render_template, session, redirect, url_for, jsonify, request
 from config import Config
 from models import db
 from routes import register_routes
@@ -12,6 +12,21 @@ app.config.from_object(Config)
 # Configure logging for Azure
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Force HTTPS in production
+if app.config.get('FLASK_ENV') == 'production' or app.config.get('FORCE_HTTPS'):
+    @app.before_request
+    def force_https():
+        # Handle Azure App Service forwarded headers
+        if (not request.is_secure and 
+            request.headers.get('X-Forwarded-Proto', '').lower() != 'https' and
+            request.headers.get('X-Azure-Ref') is None):  # Don't redirect Azure health checks
+            if request.method == 'GET':
+                return redirect(request.url.replace('http://', 'https://'), code=301)
+        
+        # Set the URL scheme for url_for to use HTTPS
+        if request.headers.get('X-Forwarded-Proto') == 'https':
+            request.environ['wsgi.url_scheme'] = 'https'
 
 # Initialize database
 db.init_app(app)
