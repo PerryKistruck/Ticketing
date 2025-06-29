@@ -5,6 +5,7 @@ from routes import register_routes
 from auth.auth_utils import get_current_user, admin_required
 import logging
 import sys
+import os
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -14,13 +15,17 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Force HTTPS in production
-if app.config.get('FLASK_ENV') == 'production' or app.config.get('FORCE_HTTPS'):
+is_production = (app.config.get('FLASK_ENV') == 'production' or 
+                os.environ.get('WEBSITE_SITE_NAME') or  # Azure App Service
+                app.config.get('FORCE_HTTPS'))
+
+if is_production:
     @app.before_request
     def force_https():
         # Handle Azure App Service forwarded headers
         if (not request.is_secure and 
             request.headers.get('X-Forwarded-Proto', '').lower() != 'https' and
-            request.headers.get('X-Azure-Ref') is None):  # Don't redirect Azure health checks
+            not request.headers.get('X-Azure-Ref')):  # Don't redirect Azure health checks
             if request.method == 'GET':
                 return redirect(request.url.replace('http://', 'https://'), code=301)
         
@@ -90,4 +95,6 @@ def admin_dashboard():
     return render_template('admin_dashboard.html', user=user)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    import os
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=False, host='0.0.0.0', port=port)

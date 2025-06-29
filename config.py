@@ -16,5 +16,7 @@ class Config:
     PERMANENT_SESSION_LIFETIME = 3600  # 1 hour
     
     # Force HTTPS in production
-    PREFERRED_URL_SCHEME = 'https' if os.environ.get('FLASK_ENV') == 'production' else 'http'
-    FORCE_HTTPS = os.environ.get('FORCE_HTTPS', 'false').lower() == 'true'
+    is_azure = os.environ.get('WEBSITE_SITE_NAME') is not None
+    is_production = os.environ.get('FLASK_ENV') == 'production' or is_azure
+    PREFERRED_URL_SCHEME = 'https' if is_production else 'http'
+    FORCE_HTTPS = os.environ.get('FORCE_HTTPS', 'false').lower() == 'true' or is_azure
