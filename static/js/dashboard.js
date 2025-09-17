@@ -185,51 +185,6 @@ function applyFilters() {
     updateTicketsTable();
 }
 
-// API helper function
-async function apiRequest(url, options = {}) {
-    // Ensure URL uses the correct protocol and host
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-        // Absolute URL - ensure it uses HTTPS if current page is HTTPS
-        if (window.location.protocol === 'https:' && url.startsWith('http://')) {
-            url = url.replace('http://', 'https://');
-        }
-    }
-
-    const defaultOptions = {
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        },
-        credentials: 'same-origin'  // Important for session cookies
-    };
-
-    const finalOptions = {
-        ...defaultOptions,
-        ...options,
-        headers: {
-            ...defaultOptions.headers,
-            ...options.headers
-        }
-    };
-
-    try {
-        const response = await fetch(url, finalOptions);
-        
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ error: 'Request failed' }));
-            throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        return await response.json();
-    } catch (error) {
-        // Only log in development or for debugging
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            console.error('API Request Error:', error);
-            console.error('URL:', url);
-        }
-        throw error;
-    }
-}
 
 // Show toast notifications
 function showToast(message, type = 'info') {

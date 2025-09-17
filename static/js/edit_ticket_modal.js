@@ -1,52 +1,6 @@
 // Edit Ticket Modal Functionality
 // This module provides shared functionality for the edit ticket modal across all pages
 
-// API helper function (standalone version for modal)
-async function apiRequest(url, options = {}) {
-    // Ensure URL uses the correct protocol and host
-    if (url.startsWith('/')) {
-        // Relative URL - ensure it uses the current protocol and host
-        url = (window.APP_CONFIG?.API_BASE_URL || (window.location.protocol + '//' + window.location.host)) + url;
-    } else if (url.startsWith('http://') || url.startsWith('https://')) {
-        // Absolute URL - ensure it uses HTTPS if current page is HTTPS
-        if (window.location.protocol === 'https:' && url.startsWith('http://')) {
-            url = url.replace('http://', 'https://');
-        }
-    }
-
-    const defaultOptions = {
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        credentials: 'same-origin'  // Important for session cookies
-    };
-
-    const finalOptions = {
-        ...defaultOptions,
-        ...options,
-        headers: {
-            ...defaultOptions.headers,
-            ...options.headers
-        }
-    };
-
-    try {
-        const response = await fetch(url, finalOptions);
-        
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ error: 'Request failed' }));
-            throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        return await response.json();
-    } catch (error) {
-        // Re-throw with more context for network errors
-        if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-            throw new Error('Network error: Unable to connect to server. Please check your connection.');
-        }
-        throw error;
-    }
-}
 
 class EditTicketModal {
     constructor(options = {}) {
