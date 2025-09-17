@@ -21,30 +21,4 @@ class Config:
     PREFERRED_URL_SCHEME = 'https' if is_production else 'http'
     FORCE_HTTPS = os.environ.get('FORCE_HTTPS', 'false').lower() == 'true' or is_azure
 
-    # Asset versioning: prefer explicit env (ASSET_VERSION or APP_VERSION). If absent, derive a stable
-    # value per deployment from a combination of deployment date and latest static file mtime.
-    # This avoids changing on every process restart but updates when static assets change.
-    _explicit_version = os.environ.get('ASSET_VERSION') or os.environ.get('APP_VERSION')
-    if _explicit_version:
-        ASSET_VERSION = _explicit_version
-    else:
-        try:
-            static_root = os.path.join(os.path.dirname(__file__), 'static')
-            latest_mtime = 0
-            for root, dirs, files in os.walk(static_root):
-                for f in files:
-                    full = os.path.join(root, f)
-                    try:
-                        m = os.path.getmtime(full)
-                        if m > latest_mtime:
-                            latest_mtime = m
-                    except OSError:
-                        pass
-            from datetime import datetime
-            date_part = datetime.utcnow().strftime('%Y%m%d')
-            # Round mtime to an integer to keep it short
-            mtime_part = str(int(latest_mtime))[-6:] if latest_mtime else '000000'
-            ASSET_VERSION = f"{date_part}.{mtime_part}"
-        except Exception:
-            # Fallback stable default
-            ASSET_VERSION = 'v1'
+    # Asset versioning removed per user request; relying on default caching behavior.

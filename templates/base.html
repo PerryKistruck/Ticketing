@@ -105,8 +105,8 @@
             IS_SECURE: window.location.protocol === 'https:'
         };
     </script>
-    <script src="{{ url_for('static', filename='js/api.js') }}?v={{ ASSET_VERSION }}"></script>
-    <script src="{{ url_for('static', filename='js/app.js') }}?v={{ ASSET_VERSION }}"></script>
+    <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -9,7 +9,6 @@ import os
 
 app = Flask(__name__)
 app.config.from_object(Config)
-ASSET_VERSION = Config.ASSET_VERSION
 
 # Configure logging for Azure
 logging.basicConfig(level=logging.INFO)
@@ -62,7 +61,7 @@ with app.app_context():
 
 @app.context_processor
 def inject_user():
-    return dict(current_user=get_current_user(), ASSET_VERSION=ASSET_VERSION)
+    return dict(current_user=get_current_user())
 
 @app.after_request
 def add_security_headers(response):
