@@ -17,6 +17,7 @@ async function apiRequest(url, options = {}) {
     const defaultOptions = {
         headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json'
         },
         credentials: 'same-origin'  // Important for session cookies
     };
@@ -32,13 +33,22 @@ async function apiRequest(url, options = {}) {
 
     try {
         const response = await fetch(url, finalOptions);
-        
+
+        // Attempt JSON parse only if content-type indicates JSON
+        const contentType = response.headers.get('content-type') || '';
+        const tryParseJson = async () => {
+            if (contentType.includes('application/json')) {
+                return await response.json();
+            }
+            return { error: 'Non-JSON response', status: response.status };
+        };
+
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ error: 'Request failed' }));
+            const errorData = await tryParseJson();
             throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
         }
-        
-        return await response.json();
+
+        return await tryParseJson();
     } catch (error) {
         // Re-throw with more context for network errors
         if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
@@ -145,35 +155,37 @@ class CreateTicketModal {
     }
 
     async loadAssigneeOptions() {
+        // Use admin-specific endpoint that returns only admin users
+        const endpoint = '/api/tickets/admin/users';
         try {
-            const users = await apiRequest('/api/users');
+            const users = await apiRequest(endpoint);
             const assigneeSelect = document.getElementById('ticketAssignee');
-            
+
             if (assigneeSelect) {
-                // Clear existing options except "Unassigned"
                 assigneeSelect.innerHTML = '<option value="">Unassigned</option>';
-                
-                // Add admin users
-                users.filter(user => user.is_admin).forEach(user => {
+
+                // Support both formats: new endpoint returns username/full_name, fallback if structure differs
+                (users || []).forEach(user => {
                     const option = document.createElement('option');
                     option.value = user.id;
-                    option.textContent = `${user.first_name} ${user.last_name}`;
+                    const name = user.full_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username;
+                    option.textContent = name;
                     assigneeSelect.appendChild(option);
                 });
             }
         } catch (error) {
             console.error('Failed to load assignee options:', error);
-            
-            // Show user-friendly error message
             if (typeof showToast === 'function') {
-                if (error.message.includes('Network error')) {
-                    showToast('Unable to load assignee options. Network connection issue.', 'warning');
+                if (error.message.toLowerCase().includes('network')) {
+                    showToast('Network issue loading assignee list. You can still create tickets unassigned.', 'warning');
+                } else if (error.message.includes('403')) {
+                    showToast('You lack permission to load assignees. Ticket will be unassigned.', 'warning');
+                } else if (error.message.includes('401')) {
+                    showToast('Session expired. Please log in again to assign.', 'warning');
                 } else {
-                    showToast('Unable to load assignee options. Using default options.', 'warning');
+                    showToast('Unable to load assignees. Creating unassigned tickets only.', 'warning');
                 }
             }
-            
-            // Ensure at least "Unassigned" option exists
             const assigneeSelect = document.getElementById('ticketAssignee');
             if (assigneeSelect && assigneeSelect.children.length === 0) {
                 assigneeSelect.innerHTML = '<option value="">Unassigned</option>';
