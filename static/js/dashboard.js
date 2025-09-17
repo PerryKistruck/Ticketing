@@ -191,6 +191,10 @@ async function apiRequest(url, options = {}) {
     if (url.startsWith('/')) {
         // Relative URL - ensure it uses the current protocol and host
         url = (window.APP_CONFIG?.API_BASE_URL || (window.location.protocol + '//' + window.location.host)) + url;
+        // If current page is https, force https even if base was misconfigured
+        if (window.location.protocol === 'https:' && url.startsWith('http://')) {
+            url = url.replace('http://', 'https://');
+        }
     } else if (url.startsWith('http://') || url.startsWith('https://')) {
         // Absolute URL - ensure it uses HTTPS if current page is HTTPS
         if (window.location.protocol === 'https:' && url.startsWith('http://')) {
@@ -201,6 +205,7 @@ async function apiRequest(url, options = {}) {
     const defaultOptions = {
         headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json'
         },
         credentials: 'same-origin'  // Important for session cookies
     };
