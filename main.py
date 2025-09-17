@@ -9,9 +9,7 @@ import os
 
 app = Flask(__name__)
 app.config.from_object(Config)
-
-# Asset version for cache busting (fallback to timestamp if not set)
-ASSET_VERSION = os.environ.get('ASSET_VERSION') or os.environ.get('APP_VERSION') or 'v1'
+ASSET_VERSION = Config.ASSET_VERSION
 
 # Configure logging for Azure
 logging.basicConfig(level=logging.INFO)
