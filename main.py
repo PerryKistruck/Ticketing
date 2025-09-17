@@ -10,6 +10,9 @@ import os
 app = Flask(__name__)
 app.config.from_object(Config)
 
+# Asset version for cache busting (fallback to timestamp if not set)
+ASSET_VERSION = os.environ.get('ASSET_VERSION') or os.environ.get('APP_VERSION') or 'v1'
+
 # Configure logging for Azure
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -61,7 +64,14 @@ with app.app_context():
 
 @app.context_processor
 def inject_user():
-    return dict(current_user=get_current_user())
+    return dict(current_user=get_current_user(), ASSET_VERSION=ASSET_VERSION)
+
+@app.after_request
+def add_security_headers(response):
+    # Add HSTS only when using HTTPS / production conditions
+    if is_production:
+        response.headers.setdefault('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')
+    return response
 
 @app.route('/health')
 def health_check():
