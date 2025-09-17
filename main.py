@@ -22,15 +22,15 @@ is_production = (app.config.get('FLASK_ENV') == 'production' or
 if is_production:
     @app.before_request
     def force_https():
-        # Handle Azure App Service forwarded headers
-        if (not request.is_secure and 
-            request.headers.get('X-Forwarded-Proto', '').lower() != 'https' and
-            not request.headers.get('X-Azure-Ref')):  # Don't redirect Azure health checks
-            if request.method == 'GET':
-                return redirect(request.url.replace('http://', 'https://'), code=301)
-        
-        # Set the URL scheme for url_for to use HTTPS
-        if request.headers.get('X-Forwarded-Proto') == 'https':
+        # Redirect GET requests to HTTPS unless already secure or health check path
+        if (request.method == 'GET'
+            and request.path != '/health'
+            and not request.is_secure
+            and request.headers.get('X-Forwarded-Proto', '').lower() != 'https'):
+            return redirect(request.url.replace('http://', 'https://'), code=301)
+
+        # Normalize scheme for url_for when behind a proxy sending X-Forwarded-Proto
+        if request.headers.get('X-Forwarded-Proto', '').lower() == 'https':
             request.environ['wsgi.url_scheme'] = 'https'
 
 # Initialize database
