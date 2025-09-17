@@ -19,23 +19,47 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Derive asset version
+        id: asset_version
+        run: |
+          DATE=$(date +%Y%m%d)
+          SHA=$(git rev-parse --short HEAD)
+          VERSION="$DATE.$SHA"
+          echo "ASSET_VERSION=$VERSION" >> $GITHUB_ENV
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Computed ASSET_VERSION=$VERSION"
+
       - name: Set up Python version
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+          cache: 'pip'
+
+      - name: Show asset version
+        run: echo "Using ASSET_VERSION=$ASSET_VERSION"
 
       - name: Create and start virtual environment
         run: |
           python -m venv venv
           source venv/bin/activate
+          pip install --upgrade pip
       
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          source venv/bin/activate
+          pip install -r requirements.txt
         
-      # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
+  # Optional: Run tests (uncomment when tests are stable)
+  # - name: Run tests
+  #   run: |
+  #     source venv/bin/activate
+  #     pytest -q
+
+      - name: Embed asset version marker
+        run: echo $ASSET_VERSION > ASSET_VERSION.txt
 
       - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
+        run: zip -r release.zip ./* -x 'venv/*'
 
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
@@ -69,10 +93,27 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_F6578DB7F16E4570802B504D92E5A94F }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_69ECD3A85E114756A546286986E047B5 }}
 
+      - name: Set ASSET_VERSION app setting
+        env:
+          AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+        run: |
+          if [ -z "$AZURE_RESOURCE_GROUP" ]; then echo "AZURE_RESOURCE_GROUP secret not set"; exit 1; fi
+          VERSION_FILE=ASSET_VERSION.txt
+          if [ -f "$VERSION_FILE" ]; then
+            AV=$(cat $VERSION_FILE)
+            echo "Setting ASSET_VERSION=$AV in Azure App Settings"
+            az webapp config appsettings set \
+              --name TicketHelp \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --settings ASSET_VERSION=$AV
+          else
+            echo "Version file missing; skipping app setting update"; fi
+
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
           app-name: 'TicketHelp'
           slot-name: 'Production'
+          package: '.'
           
