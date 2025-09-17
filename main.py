@@ -68,6 +68,9 @@ def add_security_headers(response):
     # Add HSTS only when using HTTPS / production conditions
     if is_production:
         response.headers.setdefault('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')
+        # Content Security Policy to enforce HTTPS for subresources and requests
+        if 'Content-Security-Policy' not in response.headers:
+            response.headers['Content-Security-Policy'] = "default-src 'self' https: data:; script-src 'self' https: 'unsafe-inline'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data:; font-src 'self' https: data:; connect-src 'self' https:; upgrade-insecure-requests"
     return response
 
 @app.route('/health')
