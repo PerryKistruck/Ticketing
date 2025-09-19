@@ -189,9 +189,9 @@ class TestAuthDecoratorsIntegration(unittest.TestCase):
     
     def test_protected_route_access(self):
         """Test accessing protected routes."""
-        # Test unauthenticated access - should get redirect for form requests
-        response = self.client.get('/api/tickets/')
-        self.assertEqual(response.status_code, 302)  # Redirect to login
+        # Unauthenticated API access should return 401 JSON
+        response = self.client.get('/api/tickets/', headers={'Accept': 'application/json'})
+        self.assertEqual(response.status_code, 401)
         
         # Test authenticated access
         with self.client.session_transaction() as sess:
@@ -202,16 +202,16 @@ class TestAuthDecoratorsIntegration(unittest.TestCase):
     
     def test_admin_route_access(self):
         """Test accessing admin-only routes."""
-        # Test unauthenticated access - should get redirect for form requests
-        response = self.client.get('/api/tickets/admin/all')
-        self.assertEqual(response.status_code, 302)  # Redirect to login
+        # Unauthenticated API access should return 401 JSON
+        response = self.client.get('/api/tickets/admin/all', headers={'Accept': 'application/json'})
+        self.assertEqual(response.status_code, 401)
         
         # Test regular user access
         with self.client.session_transaction() as sess:
             sess['user_id'] = self.user.id
         
-        response = self.client.get('/api/tickets/admin/all')
-        self.assertEqual(response.status_code, 302)  # Redirect to home
+        response = self.client.get('/api/tickets/admin/all', headers={'Accept': 'application/json'})
+        self.assertEqual(response.status_code, 403)
         
         # Test admin access
         with self.client.session_transaction() as sess:

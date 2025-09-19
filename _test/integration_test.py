@@ -81,7 +81,8 @@ class TestTicketingSystemIntegration(unittest.TestCase):
         response = self.client.put(f'/api/tickets/{ticket_id}', json=update_data)
         self.assertEqual(response.status_code, 200)
         updated_ticket = response.get_json()
-        self.assertEqual(updated_ticket['status'], 'in_progress')
+        # Non-admin cannot change status; remains 'open'
+        self.assertEqual(updated_ticket['status'], 'open')
         self.assertEqual(updated_ticket['description'], 'Updated description')
         
         # 7. Get single ticket
@@ -297,12 +298,13 @@ class TestTicketingSystemIntegration(unittest.TestCase):
         response = self.client.get(f'/api/tickets/{ticket_id}')
         single_ticket = response.get_json()
         self.assertEqual(single_ticket['title'], 'Updated Consistency Test Ticket')
-        self.assertEqual(single_ticket['status'], 'in_progress')
+        # Non-admin status remains 'open'
+        self.assertEqual(single_ticket['status'], 'open')
         
         response = self.client.get('/api/tickets/')
         tickets = response.get_json()
         self.assertEqual(tickets[0]['title'], 'Updated Consistency Test Ticket')
-        self.assertEqual(tickets[0]['status'], 'in_progress')
+        self.assertEqual(tickets[0]['status'], 'open')
 
     def test_user_ticket_edit_workflow(self):
         """Test complete workflow for users editing their own tickets."""
@@ -341,7 +343,8 @@ class TestTicketingSystemIntegration(unittest.TestCase):
         
         self.assertEqual(updated_ticket['title'], 'Updated by User')
         self.assertEqual(updated_ticket['description'], 'Updated description by user')
-        self.assertEqual(updated_ticket['status'], 'in_progress')
+        # Non-admin status remains 'open'
+        self.assertEqual(updated_ticket['status'], 'open')
         self.assertEqual(updated_ticket['priority'], 'high')
         self.assertEqual(updated_ticket['user_id'], user.id)
         self.assertIsNone(updated_ticket['assigned_to'])  # User cannot assign
@@ -383,7 +386,8 @@ class TestTicketingSystemIntegration(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         final_ticket = response.get_json()
         
-        self.assertEqual(final_ticket['status'], 'closed')
+        # Non-admin cannot change status; still 'open'
+        self.assertEqual(final_ticket['status'], 'open')
         self.assertEqual(final_ticket['description'], 'Work completed')
         self.assertEqual(final_ticket['assigned_to'], assignee_admin.id)  # Assignment preserved
         self.assertEqual(final_ticket['user_id'], user.id)
